@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#12100e">
 <title>Daily Movement</title>
-<meta name="description" content="A 16-minute daily movement routine with demo clips and a one-minute-per-exercise timer.">
+<meta name="description" content="A 20-minute daily movement routine with demo clips and a one-minute-per-exercise timer.">
 <link rel="apple-touch-icon" href="posters/01.jpg">
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -14,14 +14,16 @@
 <!-- ============ LIST VIEW ============ -->
 <main id="listView">
   <header class="hero">
-    <p class="kicker">16 minutes &middot; 1 minute each</p>
+    <p class="kicker"><span id="heroMins">20</span> minutes &middot; 1 minute each</p>
     <h1>Daily Movement</h1>
-    <p class="sub">A morning mobility routine. Tap any exercise to watch the demo, or start the timer and follow along.</p>
+    <p class="sub">A morning mobility routine plus a beginner strength block. Tap any exercise to watch the demo, or start the timer and follow along.</p>
     <button id="startBtn" class="btn btn-primary btn-big">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
       Start workout
     </button>
-    <p class="credit">Routine from <a href="https://www.instagram.com/reel/DccLrCiPQ5w/" target="_blank" rel="noopener">@wildcard.wellness</a></p>
+    <p class="credit">Routines from
+      <a href="https://www.instagram.com/reel/DccLrCiPQ5w/" target="_blank" rel="noopener">@wildcard.wellness</a>
+      and <a href="https://www.instagram.com/reel/DcG2OkupHcn/" target="_blank" rel="noopener">@leo.moves</a></p>
   </header>
 
   <section class="grid" id="grid" aria-label="Exercise list"></section>
@@ -34,8 +36,8 @@
 <!-- ============ WORKOUT VIEW ============ -->
 <div id="workoutView" class="workout" hidden>
   <div class="w-top">
-    <div class="w-count"><span id="wIndex">1</span> <span class="dim">/ 16</span></div>
-    <div class="w-total" id="wTotal">16:00 left</div>
+    <div class="w-count"><span id="wIndex">1</span> <span class="dim">/ <span id="wCount">20</span></span></div>
+    <div class="w-total" id="wTotal">20:00 left</div>
     <button id="endBtn" class="btn btn-ghost btn-sm">End</button>
   </div>
 
@@ -90,7 +92,7 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>
     </div>
     <h2>Workout complete</h2>
-    <p id="doneStat">16 exercises &middot; 16 minutes</p>
+    <p id="doneStat">20 exercises &middot; 20 minutes</p>
     <button id="againBtn" class="btn btn-primary btn-big">Go again</button>
     <button id="homeBtn" class="btn btn-ghost">Back to list</button>
   </div>

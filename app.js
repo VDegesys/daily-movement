@@ -1,23 +1,40 @@
-/* Daily Movement — 16-exercise routine, 1 minute each.
-   Clips parsed from https://www.instagram.com/reel/DccLrCiPQ5w/ (@wildcard.wellness) */
+/* Daily Movement — 20-exercise routine, 1 minute each.
+   Clips parsed from two Instagram reels; see SOURCES below. */
+
+const SOURCES = {
+  wc: {
+    label: 'Morning mobility',
+    who:   '@wildcard.wellness',
+    url:   'https://www.instagram.com/reel/DccLrCiPQ5w/',
+  },
+  leo: {
+    label: 'Beginner strength',
+    who:   '@leo.moves',
+    url:   'https://www.instagram.com/reel/DcG2OkupHcn/',
+  },
+};
 
 const EXERCISES = [
-  { n:  1, name: 'Lymphatic hops' },
-  { n:  2, name: 'Body waves' },
-  { n:  3, name: 'Arm swings' },
-  { n:  4, name: 'Trunk twists' },
-  { n:  5, name: 'Forward arm circles' },
-  { n:  6, name: 'Bodyweight squats' },
-  { n:  7, name: 'Backward arm circles' },
-  { n:  8, name: 'Dead arms' },
-  { n:  9, name: 'Golf swings' },
-  { n: 10, name: 'Marches' },
-  { n: 11, name: 'Tiptoe arm swings' },
-  { n: 12, name: 'Twist the waist' },
-  { n: 13, name: 'Ballet squats' },
-  { n: 14, name: 'Wide arm step backs' },
-  { n: 15, name: 'Back step wave lunges' },
-  { n: 16, name: 'Pushups' },
+  { n:  1, name: 'Lymphatic hops',                  src: 'wc'  },
+  { n:  2, name: 'Body waves',                      src: 'wc'  },
+  { n:  3, name: 'Arm swings',                      src: 'wc'  },
+  { n:  4, name: 'Trunk twists',                    src: 'wc'  },
+  { n:  5, name: 'Forward arm circles',             src: 'wc'  },
+  { n:  6, name: 'Bodyweight squats',               src: 'wc'  },
+  { n:  7, name: 'Backward arm circles',            src: 'wc'  },
+  { n:  8, name: 'Dead arms',                       src: 'wc'  },
+  { n:  9, name: 'Golf swings',                     src: 'wc'  },
+  { n: 10, name: 'Marches',                         src: 'wc'  },
+  { n: 11, name: 'Tiptoe arm swings',               src: 'wc'  },
+  { n: 12, name: 'Twist the waist',                 src: 'wc'  },
+  { n: 13, name: 'Ballet squats',                   src: 'wc'  },
+  { n: 14, name: 'Wide arm step backs',             src: 'wc'  },
+  { n: 15, name: 'Back step wave lunges',           src: 'wc'  },
+  { n: 16, name: 'Pushups',                         src: 'wc'  },
+  { n: 17, name: 'Lunge to forward fold',           src: 'leo' },
+  { n: 18, name: 'Table taps',                      src: 'leo' },
+  { n: 19, name: 'Back & head taps to elbow plank', src: 'leo' },
+  { n: 20, name: 'Kneeling diagonal stretch',       src: 'leo' },
 ];
 
 const EX_SECONDS   = 60;   // one minute per exercise
@@ -34,8 +51,20 @@ const $ = id => document.getElementById(id);
 /* ================= list view ================= */
 
 const grid = $('grid');
+let lastSrc = null;
 
 EXERCISES.forEach(ex => {
+  if (ex.src !== lastSrc) {
+    lastSrc = ex.src;
+    const src = SOURCES[ex.src];
+    const head = document.createElement('h2');
+    head.className = 'group-head';
+    head.innerHTML =
+      `<span>${src.label}</span>` +
+      `<a href="${src.url}" target="_blank" rel="noopener">${src.who}</a>`;
+    grid.appendChild(head);
+  }
+
   const card = document.createElement('article');
   card.className = 'card';
   card.innerHTML = `
@@ -68,6 +97,11 @@ EXERCISES.forEach(ex => {
 
   grid.appendChild(card);
 });
+
+/* counts that depend on the routine length */
+const TOTAL = EXERCISES.length;
+$('wCount').textContent  = TOTAL;
+$('heroMins').textContent = TOTAL;
 
 /* ================= progress strip ================= */
 

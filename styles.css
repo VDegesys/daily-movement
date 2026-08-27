@@ -78,6 +78,22 @@ a{color:var(--accent)}
 @media(min-width:640px){.grid{grid-template-columns:repeat(3,1fr)}}
 @media(min-width:960px){.grid{grid-template-columns:repeat(4,1fr)}}
 
+.group-head{
+  grid-column:1/-1;
+  display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;
+  margin:1.4rem 0 -.1rem;padding-bottom:.55rem;
+  border-bottom:1px solid var(--line);
+}
+.grid > .group-head:first-child{margin-top:0}
+.group-head span{
+  font-size:.95rem;font-weight:800;letter-spacing:-.01em;
+}
+.group-head a{
+  margin-left:auto;font-size:.78rem;font-weight:600;
+  color:var(--ink-3);text-decoration:none;
+}
+.group-head a:hover{color:var(--accent)}
+
 .card{
   position:relative;background:var(--card);border:1px solid var(--line);
   border-radius:var(--radius);overflow:hidden;cursor:pointer;
