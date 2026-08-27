@@ -244,8 +244,8 @@ a{color:var(--accent)}
   flex:1;height:4px;border-radius:2px;background:var(--line);
   transition:background .3s ease;
 }
-.w-strip li.done{background:var(--ok)}
-.w-strip li.now{background:var(--accent)}
+.w-strip li.is-done{background:var(--ok)}
+.w-strip li.is-now{background:var(--accent)}
 
 /* ---------- done view ---------- */
 .done{

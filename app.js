@@ -211,7 +211,7 @@ function loadExercise(i, { autoplayDemo = true } = {}) {
   $('wNext').textContent  = next ? next.name : 'Finish';
 
   stripCells.forEach((cell, k) => {
-    cell.className = k < i ? 'done' : (k === i ? 'now' : '');
+    cell.className = k < i ? 'is-done' : (k === i ? 'is-now' : '');
   });
 
   wVideo.poster = poster(ex.n);
