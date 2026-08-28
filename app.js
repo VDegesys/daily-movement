@@ -1,17 +1,10 @@
-/* Daily Movement — 20-exercise routine, 1 minute each.
-   Clips parsed from two Instagram reels; see SOURCES below. */
+/* Daily Movement — four workouts built from three creators' routines.
+   Clip boundaries were parsed from the source videos; see SOURCES. */
 
 const SOURCES = {
-  wc: {
-    label: 'Morning mobility',
-    who:   '@wildcard.wellness',
-    url:   'https://www.instagram.com/reel/DccLrCiPQ5w/',
-  },
-  leo: {
-    label: 'Beginner strength',
-    who:   '@leo.moves',
-    url:   'https://www.instagram.com/reel/DcG2OkupHcn/',
-  },
+  wc:  { label: 'Morning mobility',  who: '@wildcard.wellness', url: 'https://www.instagram.com/reel/DccLrCiPQ5w/' },
+  leo: { label: 'Beginner strength', who: '@leo.moves',         url: 'https://www.instagram.com/reel/DcG2OkupHcn/' },
+  drg: { label: 'Daily reps',        who: '@dailyrepsguy',      url: 'https://www.youtube.com/@dailyrepsguy/shorts' },
 };
 
 const EXERCISES = [
@@ -35,20 +28,87 @@ const EXERCISES = [
   { n: 18, name: 'Table taps',                      src: 'leo' },
   { n: 19, name: 'Back & head taps to elbow plank', src: 'leo' },
   { n: 20, name: 'Kneeling diagonal stretch',       src: 'leo' },
+  { n: 21, name: 'Push-ups',                        src: 'drg' },
+  { n: 22, name: 'Pull-ups',                        src: 'drg' },
+  { n: 23, name: 'Crunches',                        src: 'drg' },
+  { n: 24, name: 'Jump squats',                     src: 'drg' },
+  { n: 25, name: 'Jump lunges',                     src: 'drg' },
+  { n: 26, name: 'Dips',                            src: 'drg' },
+  { n: 27, name: 'Inverted rows',                   src: 'drg' },
+  { n: 28, name: 'Lying leg raises',                src: 'drg' },
+  { n: 29, name: 'Plank',                           src: 'drg' },
 ];
 
-const EX_SECONDS   = 60;   // one minute per exercise
-const DEMO_SECONDS = 15;   // demo loops for the first 15 seconds
+const byNum = n => EXERCISES.find(e => e.n === n);
+const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
+
+/* His circuit: reps per round, repeated as many times as 20 minutes allows. */
+const CIRCUIT = [
+  { n: 21, reps: 25 },
+  { n: 24, reps: 25 },
+  { n: 22, reps: 5  },
+  { n: 23, reps: 25 },
+  { n: 26, reps: 10 },
+  { n: 25, reps: 20 },
+  { n: 27, reps: 10 },
+  { n: 28, reps: 15 },
+  { n: 29, hold: 30 },
+];
+
+const ROUTINES = [
+  { id: 'mobility', kind: 'timed', name: 'Morning mobility',
+    ids: range(1, 16), src: 'wc',
+    blurb: 'The full back-and-joints routine. One minute per exercise.' },
+  { id: 'stretch',  kind: 'timed', name: 'Stretch block',
+    ids: range(17, 20), src: 'leo',
+    blurb: 'Just the four mobility stretches. A quick reset.' },
+  { id: 'full',     kind: 'timed', name: 'Everything timed',
+    ids: range(1, 20),
+    blurb: 'Mobility routine and stretch block back to back.' },
+  { id: 'reps',     kind: 'reps',  name: 'Daily reps circuit',
+    minutes: 20, circuit: CIRCUIT, src: 'drg',
+    blurb: 'Rounds of reps against a 20-minute clock. Tap Done as you finish each set.' },
+];
+
+const EX_SECONDS   = 60;
+const DEMO_SECONDS = 15;
 const RING_LEN     = 2 * Math.PI * 52;
 
-const pad2  = n => String(n).padStart(2, '0');
-const clip  = n => `clips/${pad2(n)}.mp4`;
-const poster= n => `posters/${pad2(n)}.jpg`;
-const mmss  = s => `${Math.floor(s / 60)}:${pad2(Math.floor(s % 60))}`;
-
+const pad2   = n => String(n).padStart(2, '0');
+const clip   = n => `clips/${pad2(n)}.mp4`;
+const poster = n => `posters/${pad2(n)}.jpg`;
+const mmss   = s => `${Math.floor(s / 60)}:${pad2(Math.floor(s % 60))}`;
 const $ = id => document.getElementById(id);
 
-/* ================= list view ================= */
+/* ================= routine cards ================= */
+
+const routinesEl = $('routines');
+
+function routineMeta(r) {
+  if (r.kind === 'reps') return `${r.minutes} min · ${r.circuit.length} exercises · rounds`;
+  return `${r.ids.length} min · ${r.ids.length} exercises · 1 min each`;
+}
+
+ROUTINES.forEach(r => {
+  const card = document.createElement('button');
+  card.className = 'routine' + (r.kind === 'reps' ? ' routine-alt' : '');
+  const who = r.src ? `<span class="routine-who">${SOURCES[r.src].who}</span>` : '';
+  card.innerHTML = `
+    <span class="routine-head">
+      <span class="routine-name">${r.name}</span>
+      ${who}
+    </span>
+    <span class="routine-meta">${routineMeta(r)}</span>
+    <span class="routine-blurb">${r.blurb}</span>
+    <span class="routine-go">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>
+      Start
+    </span>`;
+  card.addEventListener('click', () => startRoutine(r));
+  routinesEl.appendChild(card);
+});
+
+/* ================= exercise list ================= */
 
 const grid = $('grid');
 let lastSrc = null;
@@ -81,7 +141,6 @@ EXERCISES.forEach(ex => {
   const video = card.querySelector('video');
   card.addEventListener('click', () => {
     if (video.paused) {
-      // only one demo at a time
       grid.querySelectorAll('video').forEach(v => {
         if (v !== video && !v.paused) {
           v.pause();
@@ -98,18 +157,14 @@ EXERCISES.forEach(ex => {
   grid.appendChild(card);
 });
 
-/* counts that depend on the routine length */
-const TOTAL = EXERCISES.length;
-$('wCount').textContent  = TOTAL;
-$('heroMins').textContent = TOTAL;
+function stopListDemos() {
+  grid.querySelectorAll('video').forEach(v => {
+    v.pause();
+    v.closest('.card').classList.remove('playing');
+  });
+}
 
-/* ================= progress strip ================= */
-
-const strip = $('wStrip');
-EXERCISES.forEach(() => strip.appendChild(document.createElement('li')));
-const stripCells = [...strip.children];
-
-/* ================= audio (3-2-1 countdown) ================= */
+/* ================= audio + wake lock ================= */
 
 let audioCtx = null;
 
@@ -119,7 +174,6 @@ function unlockAudio() {
   if (!AC) return;
   try {
     audioCtx = new AC();
-    // silent blip so iOS treats the context as user-activated
     const g = audioCtx.createGain();
     g.gain.value = 0;
     g.connect(audioCtx.destination);
@@ -130,14 +184,14 @@ function unlockAudio() {
   } catch (_) { audioCtx = null; }
 }
 
-function tick() {
+function tick(freq = 880) {
   if (!audioCtx) return;
   if (audioCtx.state === 'suspended') audioCtx.resume();
   const t = audioCtx.currentTime;
   const osc = audioCtx.createOscillator();
   const gain = audioCtx.createGain();
   osc.type = 'sine';
-  osc.frequency.setValueAtTime(880, t);
+  osc.frequency.setValueAtTime(freq, t);
   gain.gain.setValueAtTime(0.0001, t);
   gain.gain.exponentialRampToValueAtTime(0.28, t + 0.012);
   gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
@@ -146,10 +200,7 @@ function tick() {
   osc.stop(t + 0.2);
 }
 
-/* ================= wake lock ================= */
-
 let wakeLock = null;
-
 async function keepAwake() {
   if (!('wakeLock' in navigator)) return;
   try { wakeLock = await navigator.wakeLock.request('screen'); } catch (_) {}
@@ -158,248 +209,419 @@ function releaseAwake() {
   if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
 }
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && W.active && !W.paused) keepAwake();
+  if (document.visibilityState === 'visible' && (T.active || R.active)) keepAwake();
 });
 
-/* ================= workout ================= */
+/* ================= views ================= */
 
 const listView    = $('listView');
 const workoutView = $('workoutView');
+const repsView    = $('repsView');
 const doneView    = $('doneView');
-const wVideo      = $('wVideo');
-const videoWrap   = document.querySelector('.w-videowrap');
-const replayBtn   = $('replayBtn');
-const ringFg      = $('ringFg');
-const ringWrap    = document.querySelector('.ring-wrap');
-const pauseLabel  = $('pauseLabel');
-const pauseIcon   = $('pauseIcon');
+
+function showView(el) {
+  [listView, workoutView, repsView, doneView].forEach(v => { v.hidden = v !== el; });
+}
+
+/* shared demo-window helper: loops for DEMO_SECONDS, then parks on a frame */
+function makeDemo(video, replayBtn) {
+  const wrap = video.closest('.w-videowrap');
+  const api = {
+    manual: false,
+    show() { wrap.classList.remove('idle'); replayBtn.hidden = true; video.play().catch(() => {}); },
+    park() { video.pause(); wrap.classList.add('idle'); replayBtn.hidden = false; },
+    get parked() { return !replayBtn.hidden; },
+    load(n) {
+      api.manual = false;
+      video.poster = poster(n);
+      video.src = clip(n);
+      video.load();
+      api.show();
+    },
+    clear() { video.pause(); video.removeAttribute('src'); video.load(); },
+  };
+  replayBtn.addEventListener('click', () => { api.manual = true; api.show(); });
+  video.addEventListener('click', () => {
+    if (api.parked) return;
+    api.manual = false;
+    api.park();
+  });
+  return api;
+}
 
 const ICON_PAUSE = 'M6 5h4v14H6zm8 0h4v14h-4z';
 const ICON_PLAY  = 'M8 5v14l11-7z';
 
-const W = {
-  active: false,
-  paused: false,
-  idx: 0,
-  exStart: 0,      // epoch ms the current exercise began (shifted on pause)
-  pauseAt: 0,      // epoch ms the workout was paused
-  beeped: new Set(),
-  manual: false,   // user re-opened the demo; stop auto-pausing it
-  prefetch: null,
+let loopId = null;
+function startLoop(fn) { stopLoop(); loopId = setInterval(fn, 100); }
+function stopLoop() { clearInterval(loopId); loopId = null; }
+
+/* ================= timed engine ================= */
+
+const tDemo = makeDemo($('wVideo'), $('replayBtn'));
+const ringFg   = $('ringFg');
+const ringWrap = document.querySelector('#workoutView .ring-wrap');
+
+const T = {
+  active: false, paused: false, idx: 0,
+  exStart: 0, pauseAt: 0, beeped: new Set(),
+  list: [], routine: null, prefetch: null,
 };
 
 ringFg.style.strokeDasharray = RING_LEN;
 
-function elapsedInExercise() {
-  const now = W.paused ? W.pauseAt : Date.now();
-  return (now - W.exStart) / 1000;
+const tElapsed = () => ((T.paused ? T.pauseAt : Date.now()) - T.exStart) / 1000;
+
+let tStrip = [];
+function buildTimedStrip() {
+  const strip = $('wStrip');
+  strip.innerHTML = '';
+  T.list.forEach(() => strip.appendChild(document.createElement('li')));
+  tStrip = [...strip.children];
 }
 
-function loadExercise(i, { autoplayDemo = true } = {}) {
-  W.idx = i;
-  W.exStart = Date.now();
-  W.pauseAt = 0;
-  W.beeped.clear();
-  W.manual = false;
+function tLoad(i) {
+  T.idx = i;
+  T.exStart = Date.now();
+  T.pauseAt = 0;
+  T.beeped.clear();
 
-  const ex = EXERCISES[i];
-  const next = EXERCISES[i + 1];
+  const ex   = byNum(T.list[i]);
+  const next = T.list[i + 1] ? byNum(T.list[i + 1]) : null;
 
   $('wIndex').textContent = i + 1;
   $('wNum').textContent   = ex.n;
   $('wName').textContent  = ex.name;
   $('wNext').textContent  = next ? next.name : 'Finish';
 
-  stripCells.forEach((cell, k) => {
-    cell.className = k < i ? 'is-done' : (k === i ? 'is-now' : '');
-  });
+  tStrip.forEach((c, k) => { c.className = k < i ? 'is-done' : (k === i ? 'is-now' : ''); });
+  tDemo.load(ex.n);
 
-  wVideo.poster = poster(ex.n);
-  wVideo.src = clip(ex.n);
-  wVideo.load();
-  if (autoplayDemo) showDemo();
-
-  // warm the next clip so the switch is instant
   if (next) {
-    if (!W.prefetch) {
-      W.prefetch = document.createElement('video');
-      W.prefetch.muted = true;
-      W.prefetch.preload = 'auto';
+    if (!T.prefetch) {
+      T.prefetch = document.createElement('video');
+      T.prefetch.muted = true;
+      T.prefetch.preload = 'auto';
     }
-    W.prefetch.src = clip(next.n);
+    T.prefetch.src = clip(next.n);
   }
 }
 
-function showDemo() {
-  videoWrap.classList.remove('idle');
-  replayBtn.hidden = true;
-  wVideo.play().catch(() => {});
-}
-
-function hideDemo() {
-  wVideo.pause();
-  videoWrap.classList.add('idle');
-  replayBtn.hidden = false;
-}
-
-replayBtn.addEventListener('click', () => {
-  W.manual = true;          // stay on until the minute ends or they tap the video
-  showDemo();
-});
-
-wVideo.addEventListener('click', () => {
-  if (!replayBtn.hidden) return;
-  W.manual = false;
-  hideDemo();
-});
-
-function render() {
-  const el = Math.min(elapsedInExercise(), EX_SECONDS);
+function tRender() {
+  const el = Math.min(tElapsed(), EX_SECONDS);
   const remaining = Math.max(0, EX_SECONDS - el);
   const secs = Math.ceil(remaining - 0.0001);
 
   $('wSeconds').textContent = Math.max(0, secs);
   ringFg.style.strokeDashoffset = RING_LEN * (1 - remaining / EX_SECONDS);
   ringWrap.classList.toggle('urgent', secs <= 3 && secs > 0);
-
-  const totalLeft = (EXERCISES.length - W.idx) * EX_SECONDS - el;
-  $('wTotal').textContent = `${mmss(Math.max(0, totalLeft))} left`;
+  $('wTotal').textContent = `${mmss(Math.max(0, (T.list.length - T.idx) * EX_SECONDS - el))} left`;
 }
 
-let loopId = null;
-function startLoop() { if (!loopId) loopId = setInterval(frame, 100); }
-function stopLoop()  { clearInterval(loopId); loopId = null; }
+function tFrame() {
+  if (!T.active) { stopLoop(); return; }
+  if (!T.paused) {
+    const el = tElapsed();
+    if (!tDemo.manual && el >= DEMO_SECONDS && !tDemo.parked) tDemo.park();
 
-function frame() {
-  if (!W.active) { stopLoop(); return; }
-
-  if (!W.paused) {
-    const el = elapsedInExercise();
-
-    // demo window: loop for the first 15s, then park on a frame
-    if (!W.manual && el >= DEMO_SECONDS && replayBtn.hidden) hideDemo();
-
-    // 3-2-1 countdown
-    const secsLeft = Math.ceil(EX_SECONDS - el - 0.0001);
-    if (secsLeft >= 1 && secsLeft <= 3 && !W.beeped.has(secsLeft)) {
-      W.beeped.add(secsLeft);
-      tick();
-    }
+    const left = Math.ceil(EX_SECONDS - el - 0.0001);
+    if (left >= 1 && left <= 3 && !T.beeped.has(left)) { T.beeped.add(left); tick(); }
 
     if (el >= EX_SECONDS) {
-      if (W.idx + 1 >= EXERCISES.length) return finish();
-      loadExercise(W.idx + 1);
+      if (T.idx + 1 >= T.list.length) return tFinish();
+      tLoad(T.idx + 1);
     }
   }
-
-  render();
+  tRender();
 }
 
-function startWorkout() {
-  unlockAudio();
-  keepAwake();
-
-  // stop any list demos still playing
-  grid.querySelectorAll('video').forEach(v => {
-    v.pause();
-    v.closest('.card').classList.remove('playing');
-  });
-
-  W.active = true;
-  W.paused = false;
-  setPausedUI(false);
-
-  listView.hidden = true;
-  doneView.hidden = true;
-  workoutView.hidden = false;
-
-  loadExercise(0);
-  render();
-  startLoop();
+function tSetPaused(p) {
+  $('pauseLabel').textContent = p ? 'Resume' : 'Pause';
+  $('pauseIcon').querySelector('path').setAttribute('d', p ? ICON_PLAY : ICON_PAUSE);
 }
 
-function setPausedUI(paused) {
-  pauseLabel.textContent = paused ? 'Resume' : 'Pause';
-  pauseIcon.querySelector('path').setAttribute('d', paused ? ICON_PLAY : ICON_PAUSE);
-}
-
-function togglePause() {
-  if (!W.active) return;
-  if (W.paused) {
-    W.exStart += Date.now() - W.pauseAt;   // don't count paused time
-    W.paused = false;
-    W.pauseAt = 0;
+function tTogglePause() {
+  if (!T.active) return;
+  if (T.paused) {
+    T.exStart += Date.now() - T.pauseAt;
+    T.paused = false; T.pauseAt = 0;
     keepAwake();
-    if (elapsedInExercise() < DEMO_SECONDS || W.manual) showDemo();
-    setPausedUI(false);
-    startLoop();
+    if (tElapsed() < DEMO_SECONDS || tDemo.manual) tDemo.show();
+    tSetPaused(false);
+    startLoop(tFrame);
   } else {
-    W.paused = true;
-    W.pauseAt = Date.now();
-    wVideo.pause();
+    T.paused = true; T.pauseAt = Date.now();
+    $('wVideo').pause();
     releaseAwake();
-    setPausedUI(true);
+    tSetPaused(true);
   }
-  render();
+  tRender();
 }
 
-function skip() {
-  if (!W.active) return;
-  if (W.idx + 1 >= EXERCISES.length) return finish();
-  loadExercise(W.idx + 1);
-  if (W.paused) { W.paused = false; setPausedUI(false); startLoop(); }
-  render();
+function tSkip() {
+  if (!T.active) return;
+  if (T.idx + 1 >= T.list.length) return tFinish();
+  tLoad(T.idx + 1);
+  if (T.paused) { T.paused = false; tSetPaused(false); startLoop(tFrame); }
+  tRender();
 }
 
-function prev() {
-  if (!W.active) return;
-  // restart the current exercise if we're past the first few seconds
-  const target = elapsedInExercise() > 3 || W.idx === 0 ? W.idx : W.idx - 1;
-  loadExercise(target);
-  if (W.paused) { W.paused = false; setPausedUI(false); startLoop(); }
-  render();
+function tPrev() {
+  if (!T.active) return;
+  tLoad(tElapsed() > 3 || T.idx === 0 ? T.idx : T.idx - 1);
+  if (T.paused) { T.paused = false; tSetPaused(false); startLoop(tFrame); }
+  tRender();
 }
 
-function finish() {
-  const done = W.idx + 1;
-  W.active = false;
+function tFinish() {
+  const done = T.idx + 1;
+  T.active = false;
   stopLoop();
-  wVideo.pause();
+  tDemo.clear();
   releaseAwake();
-  workoutView.hidden = true;
-  doneView.hidden = false;
+  $('doneTitle').textContent = 'Workout complete';
   $('doneStat').textContent =
     `${done} exercise${done === 1 ? '' : 's'} · ${mmss(done * EX_SECONDS)}`;
+  $('doneTally').hidden = true;
+  showView(doneView);
+}
+
+/* ================= reps engine ================= */
+
+const rDemo = makeDemo($('rVideo'), $('rReplayBtn'));
+
+const R = {
+  active: false, paused: false, idx: 0, round: 1,
+  start: 0, pauseAt: 0, exStart: 0, exPauseAt: 0,
+  tally: {}, beeped: new Set(), holdBeeped: new Set(),
+  routine: null, prefetch: null,
+};
+
+const rNow      = () => (R.paused ? R.pauseAt : Date.now());
+const rElapsed  = () => (rNow() - R.start) / 1000;
+const rExElapsed = () => (rNow() - R.exStart) / 1000;
+const rLeft     = () => Math.max(0, R.routine.minutes * 60 - rElapsed());
+
+let rStrip = [];
+function buildRepsStrip() {
+  const strip = $('rStrip');
+  strip.innerHTML = '';
+  R.routine.circuit.forEach(() => strip.appendChild(document.createElement('li')));
+  rStrip = [...strip.children];
+}
+
+function rStep() { return R.routine.circuit[R.idx]; }
+
+function rTallyText(step) {
+  const ex = byNum(step.n);
+  const got = R.tally[step.n] || 0;
+  if (step.hold) return got ? `${got} sec held so far` : 'First hold of the day';
+  return got ? `${got} ${ex.name.toLowerCase()} so far` : `First set of ${ex.name.toLowerCase()}`;
+}
+
+function rLoad(i) {
+  R.idx = i;
+  R.exStart = Date.now();
+  R.exPauseAt = 0;
+  R.holdBeeped.clear();
+
+  const step = rStep();
+  const ex   = byNum(step.n);
+  const nextStep = R.routine.circuit[(i + 1) % R.routine.circuit.length];
+
+  $('rTarget').textContent = step.hold ? step.hold : step.reps;
+  $('rUnit').textContent   = step.hold ? 'sec hold' : 'reps';
+  $('rName').textContent   = ex.name;
+  $('rTally').textContent  = rTallyText(step);
+  $('rNext').textContent   = byNum(nextStep.n).name;
+  $('rRound').textContent  = R.round;
+  $('rDoneLabel').textContent = step.hold ? 'Done' : 'Done';
+
+  rStrip.forEach((c, k) => { c.className = k < i ? 'is-done' : (k === i ? 'is-now' : ''); });
+  rDemo.load(ex.n);
+
+  if (!R.prefetch) {
+    R.prefetch = document.createElement('video');
+    R.prefetch.muted = true;
+    R.prefetch.preload = 'auto';
+  }
+  R.prefetch.src = clip(nextStep.n);
+}
+
+function rAdvance(credit) {
+  const step = rStep();
+  if (credit) {
+    const got = step.hold
+      ? Math.min(step.hold, Math.round(rExElapsed()))
+      : step.reps;
+    R.tally[step.n] = (R.tally[step.n] || 0) + got;
+  }
+  let next = R.idx + 1;
+  if (next >= R.routine.circuit.length) { next = 0; R.round += 1; }
+  rLoad(next);
+  rRender();
+}
+
+function rRender() {
+  const left = rLeft();
+  $('rClock').textContent = mmss(left);
+  $('rClock').classList.toggle('urgent-text', left <= 10);
+
+  const step = rStep();
+  if (step.hold) {
+    const held = Math.min(step.hold, rExElapsed());
+    $('rTarget').textContent = Math.max(0, Math.ceil(step.hold - held));
+  }
+}
+
+function rFrame() {
+  if (!R.active) { stopLoop(); return; }
+  if (!R.paused) {
+    if (!rDemo.manual && rExElapsed() >= DEMO_SECONDS && !rDemo.parked) rDemo.park();
+
+    const left = rLeft();
+    const secs = Math.ceil(left - 0.0001);
+    if (secs >= 1 && secs <= 3 && !R.beeped.has(secs)) { R.beeped.add(secs); tick(); }
+
+    const step = rStep();
+    if (step.hold) {
+      const remain = Math.ceil(step.hold - rExElapsed() - 0.0001);
+      if (remain >= 1 && remain <= 3 && !R.holdBeeped.has(remain)) {
+        R.holdBeeped.add(remain); tick(660);
+      }
+      if (rExElapsed() >= step.hold) return rAdvance(true);
+    }
+
+    if (left <= 0) return rFinish();
+  }
+  rRender();
+}
+
+function rSetPaused(p) {
+  $('rPauseIcon').querySelector('path').setAttribute('d', p ? ICON_PLAY : ICON_PAUSE);
+}
+
+function rTogglePause() {
+  if (!R.active) return;
+  if (R.paused) {
+    const gap = Date.now() - R.pauseAt;
+    R.start += gap;
+    R.exStart += gap;
+    R.paused = false; R.pauseAt = 0;
+    keepAwake();
+    if (rExElapsed() < DEMO_SECONDS || rDemo.manual) rDemo.show();
+    rSetPaused(false);
+    startLoop(rFrame);
+  } else {
+    R.paused = true; R.pauseAt = Date.now();
+    $('rVideo').pause();
+    releaseAwake();
+    rSetPaused(true);
+  }
+  rRender();
+}
+
+function rFinish() {
+  R.active = false;
+  stopLoop();
+  rDemo.clear();
+  releaseAwake();
+
+  const rounds = Math.max(0, R.round - 1) + (R.idx > 0 ? 1 : 0);
+  $('doneTitle').textContent = 'Time';
+  $('doneStat').textContent =
+    `${R.routine.minutes} minutes · ${rounds} round${rounds === 1 ? '' : 's'}`;
+
+  const list = $('doneTally');
+  list.innerHTML = '';
+  const entries = R.routine.circuit
+    .map(s => [s, R.tally[s.n] || 0])
+    .filter(([, v]) => v > 0);
+  entries.forEach(([s, v]) => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span>${byNum(s.n).name}</span><b>${v}${s.hold ? ' sec' : ''}</b>`;
+    list.appendChild(li);
+  });
+  list.hidden = entries.length === 0;
+
+  showView(doneView);
+}
+
+/* ================= routing ================= */
+
+let lastRoutine = ROUTINES[0];
+
+function startRoutine(r) {
+  lastRoutine = r;
+  unlockAudio();
+  keepAwake();
+  stopListDemos();
+  T.active = false;
+  R.active = false;
+  stopLoop();
+
+  if (r.kind === 'timed') {
+    T.routine = r;
+    T.list = r.ids.slice();
+    T.active = true; T.paused = false;
+    $('wCount').textContent = T.list.length;
+    tSetPaused(false);
+    buildTimedStrip();
+    showView(workoutView);
+    tLoad(0);
+    tRender();
+    startLoop(tFrame);
+  } else {
+    R.routine = r;
+    R.active = true; R.paused = false;
+    R.idx = 0; R.round = 1; R.tally = {};
+    R.beeped.clear();
+    R.start = Date.now(); R.pauseAt = 0;
+    rSetPaused(false);
+    buildRepsStrip();
+    showView(repsView);
+    rLoad(0);
+    rRender();
+    startLoop(rFrame);
+  }
 }
 
 function goHome() {
-  W.active = false;
+  T.active = false;
+  R.active = false;
   stopLoop();
-  wVideo.pause();
-  wVideo.removeAttribute('src');
-  wVideo.load();
+  tDemo.clear();
+  rDemo.clear();
   releaseAwake();
-  workoutView.hidden = true;
-  doneView.hidden = true;
-  listView.hidden = false;
+  showView(listView);
   window.scrollTo(0, 0);
 }
 
-$('startBtn').addEventListener('click', startWorkout);
-$('pauseBtn').addEventListener('click', togglePause);
-$('skipBtn').addEventListener('click', skip);
-$('prevBtn').addEventListener('click', prev);
-$('endBtn').addEventListener('click', () => { if (W.idx > 0) finish(); else goHome(); });
-$('againBtn').addEventListener('click', startWorkout);
+$('pauseBtn').addEventListener('click', tTogglePause);
+$('skipBtn').addEventListener('click', tSkip);
+$('prevBtn').addEventListener('click', tPrev);
+$('endBtn').addEventListener('click', () => { if (T.idx > 0) tFinish(); else goHome(); });
+
+$('rPauseBtn').addEventListener('click', rTogglePause);
+$('rDoneBtn').addEventListener('click', () => R.active && rAdvance(true));
+$('rSkipBtn').addEventListener('click', () => R.active && rAdvance(false));
+$('rEndBtn').addEventListener('click', () => {
+  if (R.round > 1 || R.idx > 0 || Object.keys(R.tally).length) rFinish(); else goHome();
+});
+
+$('againBtn').addEventListener('click', () => startRoutine(lastRoutine));
 $('homeBtn').addEventListener('click', goHome);
 
 document.addEventListener('keydown', e => {
-  if (!W.active) {
-    if (e.code === 'Space' || e.code === 'Enter') { /* let buttons handle it */ }
-    return;
+  if (T.active) {
+    if (e.code === 'Space')      { e.preventDefault(); tTogglePause(); }
+    if (e.code === 'ArrowRight') { e.preventDefault(); tSkip(); }
+    if (e.code === 'ArrowLeft')  { e.preventDefault(); tPrev(); }
+    if (e.code === 'Escape')     { e.preventDefault(); goHome(); }
+  } else if (R.active) {
+    if (e.code === 'Space')      { e.preventDefault(); rTogglePause(); }
+    if (e.code === 'Enter')      { e.preventDefault(); rAdvance(true); }
+    if (e.code === 'ArrowRight') { e.preventDefault(); rAdvance(false); }
+    if (e.code === 'Escape')     { e.preventDefault(); goHome(); }
   }
-  if (e.code === 'Space')      { e.preventDefault(); togglePause(); }
-  if (e.code === 'ArrowRight') { e.preventDefault(); skip(); }
-  if (e.code === 'ArrowLeft')  { e.preventDefault(); prev(); }
-  if (e.code === 'Escape')     { e.preventDefault(); goHome(); }
 });
