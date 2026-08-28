@@ -5,6 +5,7 @@ const SOURCES = {
   wc:  { label: 'Morning mobility',  who: '@wildcard.wellness', url: 'https://www.instagram.com/reel/DccLrCiPQ5w/' },
   leo: { label: 'Beginner strength', who: '@leo.moves',         url: 'https://www.instagram.com/reel/DcG2OkupHcn/' },
   drg: { label: 'Daily reps',        who: '@dailyrepsguy',      url: 'https://www.youtube.com/@dailyrepsguy/shorts' },
+  tay: { label: 'D1 athlete mobility', who: '@tayroduncut_',    url: 'https://www.instagram.com/reel/DaLPpRmTK9Z/' },
 };
 
 const EXERCISES = [
@@ -37,6 +38,21 @@ const EXERCISES = [
   { n: 27, name: 'Inverted rows',                   src: 'drg' },
   { n: 28, name: 'Lying leg raises',                src: 'drg' },
   { n: 29, name: 'Plank',                           src: 'drg' },
+  { n: 30, name: 'Pogo jumps',                      src: 'tay' },
+  { n: 31, name: 'Body twists',                     src: 'tay' },
+  { n: 32, name: 'Body waves',                      src: 'tay' },
+  { n: 33, name: 'Elephant walks',                  src: 'tay' },
+  { n: 34, name: 'Squat holds',                     src: 'tay' },
+  { n: 35, name: 'Thoracic rotations',              src: 'tay' },
+  { n: 36, name: 'Cossack squats',                  src: 'tay' },
+  { n: 37, name: 'Pancake fold',                    src: 'tay' },
+  { n: 38, name: "World's greatest stretch",        src: 'tay' },
+  { n: 39, name: 'Cat cow',                         src: 'tay' },
+  { n: 40, name: 'Needle threads',                  src: 'tay' },
+  { n: 41, name: "90/90's",                         src: 'tay' },
+  { n: 42, name: '90/90 folds',                     src: 'tay' },
+  { n: 43, name: 'Shoulder dislocations',           src: 'tay' },
+  { n: 44, name: 'Trunk twists',                    src: 'tay' },
 ];
 
 const byNum = n => EXERCISES.find(e => e.n === n);
@@ -55,6 +71,25 @@ const CIRCUIT = [
   { n: 29, hold: 30 },
 ];
 
+/* His prescription, in his order. Holds count themselves down; rep steps wait for Done. */
+const D1_MOBILITY = [
+  { n: 30, hold: 30 },
+  { n: 31, hold: 30 },
+  { n: 32, hold: 30 },
+  { n: 33, reps: 10, each: 'leg'  },
+  { n: 34, hold: 30 },
+  { n: 35, reps:  5, each: 'side' },
+  { n: 36, reps:  5, each: 'side' },
+  { n: 37, hold: 30 },
+  { n: 38, reps:  5, each: 'side' },
+  { n: 39, reps: 10 },
+  { n: 40, reps:  5, each: 'side' },
+  { n: 41, reps: 10 },
+  { n: 42, reps:  5, each: 'side' },
+  { n: 43, reps:  5 },
+  { n: 44, reps:  5 },
+];
+
 const ROUTINES = [
   { id: 'mobility', kind: 'timed', name: 'Morning mobility',
     ids: range(1, 16), src: 'wc',
@@ -65,9 +100,12 @@ const ROUTINES = [
   { id: 'full',     kind: 'timed', name: 'Everything timed',
     ids: range(1, 20),
     blurb: 'Mobility routine and stretch block back to back.' },
-  { id: 'reps',     kind: 'reps',  name: 'Daily reps circuit',
+  { id: 'reps',     kind: 'reps',  mode: 'amrap', name: 'Daily reps circuit',
     minutes: 20, circuit: CIRCUIT, src: 'drg',
     blurb: 'Rounds of reps against a 20-minute clock. Tap Done as you finish each set.' },
+  { id: 'd1',       kind: 'reps',  mode: 'once',  name: 'D1 athlete mobility',
+    circuit: D1_MOBILITY, src: 'tay',
+    blurb: 'Fifteen movements once through at your own pace. Holds time themselves.' },
 ];
 
 const EX_SECONDS   = 60;
@@ -85,7 +123,11 @@ const $ = id => document.getElementById(id);
 const routinesEl = $('routines');
 
 function routineMeta(r) {
-  if (r.kind === 'reps') return `${r.minutes} min · ${r.circuit.length} exercises · rounds`;
+  if (r.kind === 'reps') {
+    return r.mode === 'amrap'
+      ? `${r.minutes} min · ${r.circuit.length} exercises · rounds`
+      : `~10 min · ${r.circuit.length} exercises · once through`;
+  }
   return `${r.ids.length} min · ${r.ids.length} exercises · 1 min each`;
 }
 
@@ -397,10 +439,11 @@ const R = {
   routine: null, prefetch: null,
 };
 
-const rNow      = () => (R.paused ? R.pauseAt : Date.now());
-const rElapsed  = () => (rNow() - R.start) / 1000;
+const rNow       = () => (R.paused ? R.pauseAt : Date.now());
+const rElapsed   = () => (rNow() - R.start) / 1000;
 const rExElapsed = () => (rNow() - R.exStart) / 1000;
-const rLeft     = () => Math.max(0, R.routine.minutes * 60 - rElapsed());
+const rLeft      = () => Math.max(0, R.routine.minutes * 60 - rElapsed());
+const rIsAmrap   = () => R.routine.mode === 'amrap';
 
 let rStrip = [];
 function buildRepsStrip() {
@@ -412,8 +455,17 @@ function buildRepsStrip() {
 
 function rStep() { return R.routine.circuit[R.idx]; }
 
+function rUnitText(step) {
+  if (step.hold) return 'sec hold';
+  return step.each ? `reps each ${step.each}` : 'reps';
+}
+
 function rTallyText(step) {
   const ex = byNum(step.n);
+  if (!rIsAmrap()) {
+    const left = R.routine.circuit.length - R.idx - 1;
+    return left ? `${left} to go` : 'Last one';
+  }
   const got = R.tally[step.n] || 0;
   if (step.hold) return got ? `${got} sec held so far` : 'First hold of the day';
   return got ? `${got} ${ex.name.toLowerCase()} so far` : `First set of ${ex.name.toLowerCase()}`;
@@ -430,12 +482,14 @@ function rLoad(i) {
   const nextStep = R.routine.circuit[(i + 1) % R.routine.circuit.length];
 
   $('rTarget').textContent = step.hold ? step.hold : step.reps;
-  $('rUnit').textContent   = step.hold ? 'sec hold' : 'reps';
+  $('rUnit').textContent   = rUnitText(step);
   $('rName').textContent   = ex.name;
   $('rTally').textContent  = rTallyText(step);
-  $('rNext').textContent   = byNum(nextStep.n).name;
-  $('rRound').textContent  = R.round;
-  $('rDoneLabel').textContent = step.hold ? 'Done' : 'Done';
+  $('rNext').textContent   = (!rIsAmrap() && i + 1 >= R.routine.circuit.length)
+    ? 'Finish' : byNum(nextStep.n).name;
+  $('rCount').textContent  = rIsAmrap()
+    ? `Round ${R.round}`
+    : `${i + 1} / ${R.routine.circuit.length}`;
 
   rStrip.forEach((c, k) => { c.className = k < i ? 'is-done' : (k === i ? 'is-now' : ''); });
   rDemo.load(ex.n);
@@ -457,15 +511,22 @@ function rAdvance(credit) {
     R.tally[step.n] = (R.tally[step.n] || 0) + got;
   }
   let next = R.idx + 1;
-  if (next >= R.routine.circuit.length) { next = 0; R.round += 1; }
+  if (next >= R.routine.circuit.length) {
+    if (!rIsAmrap()) return rFinish();
+    next = 0; R.round += 1;
+  }
   rLoad(next);
   rRender();
 }
 
 function rRender() {
-  const left = rLeft();
-  $('rClock').textContent = mmss(left);
-  $('rClock').classList.toggle('urgent-text', left <= 10);
+  if (rIsAmrap()) {
+    const left = rLeft();
+    $('rClock').textContent = mmss(left);
+    $('rClock').classList.toggle('urgent-text', left <= 10);
+  } else {
+    $('rClock').textContent = mmss(rElapsed());
+  }
 
   const step = rStep();
   if (step.hold) {
@@ -479,9 +540,10 @@ function rFrame() {
   if (!R.paused) {
     if (!rDemo.manual && rExElapsed() >= DEMO_SECONDS && !rDemo.parked) rDemo.park();
 
-    const left = rLeft();
-    const secs = Math.ceil(left - 0.0001);
-    if (secs >= 1 && secs <= 3 && !R.beeped.has(secs)) { R.beeped.add(secs); tick(); }
+    if (rIsAmrap()) {
+      const secs = Math.ceil(rLeft() - 0.0001);
+      if (secs >= 1 && secs <= 3 && !R.beeped.has(secs)) { R.beeped.add(secs); tick(); }
+    }
 
     const step = rStep();
     if (step.hold) {
@@ -492,7 +554,7 @@ function rFrame() {
       if (rExElapsed() >= step.hold) return rAdvance(true);
     }
 
-    if (left <= 0) return rFinish();
+    if (rIsAmrap() && rLeft() <= 0) return rFinish();
   }
   rRender();
 }
@@ -522,21 +584,30 @@ function rTogglePause() {
 }
 
 function rFinish() {
+  const elapsed = rElapsed();
+  const amrap = rIsAmrap();
   R.active = false;
   stopLoop();
   rDemo.clear();
   releaseAwake();
 
-  const rounds = Math.max(0, R.round - 1) + (R.idx > 0 ? 1 : 0);
-  $('doneTitle').textContent = 'Time';
-  $('doneStat').textContent =
-    `${R.routine.minutes} minutes · ${rounds} round${rounds === 1 ? '' : 's'}`;
+  if (amrap) {
+    const rounds = Math.max(0, R.round - 1) + (R.idx > 0 ? 1 : 0);
+    $('doneTitle').textContent = 'Time';
+    $('doneStat').textContent =
+      `${R.routine.minutes} minutes · ${rounds} round${rounds === 1 ? '' : 's'}`;
+  } else {
+    const done = R.idx + 1;
+    $('doneTitle').textContent = 'Routine complete';
+    $('doneStat').textContent =
+      `${done} of ${R.routine.circuit.length} movements · ${mmss(elapsed)}`;
+  }
 
   const list = $('doneTally');
   list.innerHTML = '';
-  const entries = R.routine.circuit
-    .map(s => [s, R.tally[s.n] || 0])
-    .filter(([, v]) => v > 0);
+  const entries = amrap
+    ? R.routine.circuit.map(s => [s, R.tally[s.n] || 0]).filter(([, v]) => v > 0)
+    : [];
   entries.forEach(([s, v]) => {
     const li = document.createElement('li');
     li.innerHTML = `<span>${byNum(s.n).name}</span><b>${v}${s.hold ? ' sec' : ''}</b>`;

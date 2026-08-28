@@ -1,6 +1,6 @@
 # Daily Movement
 
-Four pick-and-go workouts built from three creators' routines, as a web app.
+Five pick-and-go workouts built from four creators' routines, as a web app.
 
 **Live:** https://vdegesys.github.io/daily-movement/
 
@@ -12,6 +12,7 @@ Four pick-and-go workouts built from three creators' routines, as a web app.
 | Stretch block | 4 min | 1 minute per exercise (#17-20) |
 | Everything timed | 20 min | 1 minute per exercise (#1-20) |
 | Daily reps circuit | 20 min | Rounds of reps against the clock (#21-29) |
+| D1 athlete mobility | ~10 min | Fifteen movements once through, self-paced (#30-44) |
 
 **Timed workouts** run a minute per exercise. The demo loops for the first 15
 seconds of each minute, then parks on a frame with a **Show demo** button.
@@ -23,7 +24,11 @@ finish each set and it tallies your cumulative reps — the finish screen shows
 the full count per exercise, plus rounds completed. The plank is a 30-second
 hold that counts itself down; leaving early credits the seconds you held.
 
-Both modes keep a screen wake lock so the display stays on.
+**D1 athlete mobility** runs his prescription once through at your own pace.
+The five 30-second holds count themselves down and advance on their own; the
+rep steps wait for **Done**. The clock counts up so you can see your pace.
+
+All modes keep a screen wake lock so the display stays on.
 
 Keyboard — timed: `space` pause, `→` skip, `←` previous, `esc` exit.
 Reps: `space` pause, `enter` done, `→` skip, `esc` exit.
@@ -73,6 +78,27 @@ does in those videos.
 Pull-ups need a doorway bar; dips and inverted rows use a dip station.
 Everything else is bodyweight on the floor.
 
+### D1 athlete mobility — [@tayroduncut_](https://www.instagram.com/reel/DaLPpRmTK9Z/)
+
+His "10 minute morning mobility routine", in his order with his prescribed doses.
+
+| # | Exercise | Dose | | # | Exercise | Dose |
+|---|---|---|---|---|---|---|
+| 30 | Pogo jumps | 30 sec | | 38 | World's greatest stretch | 5x each side |
+| 31 | Body twists | 30 sec | | 39 | Cat cow | 10x |
+| 32 | Body waves | 30 sec | | 40 | Needle threads | 5x each side |
+| 33 | Elephant walks | 10x each leg | | 41 | 90/90's | 10x |
+| 34 | Squat holds | 30 sec | | 42 | 90/90 folds | 5x each side |
+| 35 | Thoracic rotations | 5x each side | | 43 | Shoulder dislocations | 5x |
+| 36 | Cossack squats | 5x each side | | 44 | Trunk twists | 5x |
+| 37 | Pancake fold | 30 sec | | | | |
+
+Shoulder dislocations and trunk twists use a resistance band in the clips; a
+towel or broomstick works, or do them empty-handed.
+
+Note #32/#44 share names with #2/#4 from the mobility routine but are
+different movements — the section headers keep them apart.
+
 ## Credit
 
 All demo footage belongs to the creators linked above. Clips are short muted
@@ -82,6 +108,6 @@ excerpts of their videos, for personal use.
 
     index.html      list, timed workout, reps workout and finish views
     styles.css      styling
-    app.js          exercise data, routines, timed engine, reps engine
-    clips/NN.mp4    29 muted demo clips (540x960)
+    app.js          exercise data, routines, timed engine, reps/circuit engine
+    clips/NN.mp4    44 muted demo clips (540x960)
     posters/NN.jpg  poster frame for each clip
